@@ -6,23 +6,33 @@ const authMiddleware = require("../middleware/authMiddleware");
 
 // ➕ Add product (protected)
 router.post("/add", authMiddleware, async (req, res) => {
-  const { name, price, description } = req.body;
+  try {
+    const { name, price, description } = req.body;
 
-  const product = new Product({
-    name,
-    price,
-    description
-  });
+    const product = new Product({
+      name,
+      price,
+      description
+    });
 
-  await product.save();
+    await product.save();
 
-  res.send("Product added ✅");
+    res.json({ message: "Product added ✅" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Server error ❌" });
+  }
 });
 
 // 📦 Get all products
 router.get("/", async (req, res) => {
-  const products = await Product.find();
-  res.json(products);
+  try {
+    const products = await Product.find();
+    res.json(products);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Server error ❌" });
+  }
 });
 
 module.exports = router;
