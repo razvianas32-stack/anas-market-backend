@@ -34,7 +34,7 @@ router.post("/signup", async (req, res) => {
 
   } catch (err) {
     console.log(err);
-    res.status(500).send("Server error ❌");
+    res.status(500).json("Server error ❌");
   }
 });
 
@@ -45,11 +45,11 @@ router.post("/login", async (req, res) => {
 
     const user = await User.findOne({ email });
 
-    if (!user) return res.status(400).send("User not found ❌");
+    if (!user) return res.status(400).json({ message: "User not found ❌" });
 
     const isMatch = await bcrypt.compare(password, user.password);
 
-    if (!isMatch) return res.status(400).send("Wrong password ❌");
+    if (!isMatch) return res.status(400).json({ message: "Wrong password ❌" });
 
     const token = jwt.sign({ id: user._id }, SECRET, {
       expiresIn: "1d"
@@ -62,7 +62,7 @@ router.post("/login", async (req, res) => {
 
   } catch (err) {
     console.log(err);
-    res.status(500).send("Server error ❌");
+    res.status(500).json({ message: "Server error ❌" });
   }
 });
 
