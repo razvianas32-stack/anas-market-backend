@@ -4,13 +4,37 @@ const router = express.Router();
 const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const validator = require("validator");
 
-const SECRET = "mysecretkey";
+const SECRET = process.env.JWT_SECRET || "mysecretkey";
+
+// ✅ Validation functions
+const validateEmail = (email) => {
+  return validator.isEmail(email);
+};
+
+const validatePassword = (password) => {
+  // At least 6 characters, 1 uppercase, 1 lowercase, 1 number
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{6,}$/;
+  return passwordRegex.test(password);
+};
 
 // ✅ SIGNUP
 router.post("/signup", async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password required ❌" });
+    }
+
+    if (!validateEmail(email)) {
+      return res.status(400).json({ message: "Invalid email format ❌" });
+    }
+
+    if (!validatePassword(password)) {
+      return res.status(400).json({ message: "Password must be at least 6 characters with uppercase, lowercase, and number ❌" });
+    }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -40,6 +64,14 @@ router.post("/signup", async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password required ❌" });
+    }
+
+    if (!validateEmail(email)) {
+      return res.status(400).json({ message: "Invalid email format ❌" });
+    }
 
     const user = await User.findOne({ email });
 
