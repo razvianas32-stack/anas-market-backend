@@ -1,4 +1,4 @@
-require("dotenv").config();
+require('dotenv').config();
 
 const express = require("express");
 const cors = require("cors");
@@ -8,63 +8,62 @@ const rateLimit = require("express-rate-limit");
 
 const app = express();
 
-// ✅ Security Middleware
+// ✅ Security
 app.use(helmet());
 
-// ✅ CORS (frontend Vercel URL)
+// ✅ CORS
 app.use(cors({
-  origin: ["https://anas-market-frontend-zcmh.vercel.app"],
+  origin: "https://anas-market-frontend-zcmh.vercel.app",
   credentials: true
 }));
 
-// ✅ Rate Limiting
-const limiter = rateLimit({
+// ✅ Rate limit
+app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100
-});
-app.use(limiter);
+}));
 
-// ✅ Body Parser
+// ✅ Body parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// 🔗 MongoDB Atlas connect
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB Connected ✅"))
-  .catch(err => {
-    console.log("MongoDB Error ❌:", err);
-    process.exit(1);
-  });
+// 🔥 SINGLE MongoDB connect
+mongoose.connect(process.env.MONGO_URI, {
+  serverSelectionTimeoutMS: 5000
+})
+.then(() => console.log("MongoDB Connected ✅"))
+.catch(err => {
+  console.error("MongoDB Error ❌:", err.message);
+});
 
-// 🏠 Home route
+// ✅ Health check
+app.get("/health", (req, res) => {
+  res.send("OK");
+});
+
+// 🏠 Home
 app.get("/", (req, res) => {
   res.json({ message: "Backend chal raha hai 🚀" });
 });
 
 // 🔐 Routes
-const authRoutes = require("./routes/auth");
-app.use("/api/auth", authRoutes);
+app.use("/api/auth", require("./routes/auth"));
+app.use("/api", require("./routes/protected"));
+app.use("/api/products", require("./routes/product"));
 
-const protectedRoutes = require("./routes/protected");
-app.use("/api", protectedRoutes);
-
-const productRoutes = require("./routes/product");
-app.use("/api/products", productRoutes);
-
-// ❌ 404 Handler (ONLY ONCE)
+// ❌ 404
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found ❌" });
 });
 
-// ❌ Global Error Handler
+// ❌ Error handler
 app.use((err, req, res, next) => {
   console.error("ERROR:", err);
   res.status(500).json({ message: "Something went wrong ❌" });
 });
 
-// 🚀 Server start (Render compatible)
+// 🚀 Start
 const PORT = process.env.PORT || 5000;
-
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
