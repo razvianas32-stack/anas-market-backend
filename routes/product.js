@@ -10,29 +10,31 @@ router.post("/add", authMiddleware, async (req, res) => {
   try {
     const { name, price, description } = req.body;
 
-    if (!name || !price) {
+    const numericPrice = Number(price);
+
+    if (!name || !numericPrice) {
       return res.status(400).json({ message: "Name and price required ❌" });
     }
 
-    if (typeof price !== 'number' || price <= 0) {
+    if (isNaN(numericPrice) || numericPrice <= 0) {
       return res.status(400).json({ message: "Price must be a positive number ❌" });
     }
 
-    // Sanitize inputs
     const sanitizedName = validator.escape(name);
     const sanitizedDescription = description ? validator.escape(description) : "";
 
     const product = new Product({
       name: sanitizedName,
-      price,
+      price: numericPrice,
       description: sanitizedDescription
     });
 
     await product.save();
 
     res.json({ message: "Product added ✅" });
+
   } catch (err) {
-    console.log(err);
+    console.log("ADD ERROR:", err);
     res.status(500).json({ message: "Server error ❌" });
   }
 });
@@ -43,7 +45,7 @@ router.get("/", async (req, res) => {
     const products = await Product.find();
     res.json(products);
   } catch (err) {
-    console.log(err);
+    console.log("GET ERROR:", err);
     res.status(500).json({ message: "Server error ❌" });
   }
 });
