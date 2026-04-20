@@ -17,10 +17,14 @@ app.use(cors({
   credentials: true
 }));
 
-// ✅ Rate limit
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: {
+    xForwardedForHeader: false
+  }
 }));
 
 // ✅ Body parser
