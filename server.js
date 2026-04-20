@@ -1,4 +1,4 @@
-require('dotenv').config();
+require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
@@ -7,91 +7,92 @@ const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 
 const app = express();
+
+// ✅ Trust proxy (Render/Vercel ke liye important)
 app.set("trust proxy", 1);
-// ✅ Security
+
+// ================= SECURITY =================
 app.use(helmet());
 
-// ✅ CORS
+// ================= CORS =================
 app.use(cors({
-  origin: "https://anas-market-frontend-zcmh.vercel.app",
+  origin: [
+    "http://localhost:3000",   // local frontend
+    "https://anas-market-frontend-zcmh.vercel.app" // deployed frontend
+  ],
   credentials: true
 }));
 
+// ================= RATE LIMIT =================
 app.use(rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: 15 * 60 * 1000, // 15 min
   max: 100,
   standardHeaders: true,
-  legacyHeaders: false,
-  validate: {
-    xForwardedForHeader: false
-  }
+  legacyHeaders: false
 }));
 
-// ✅ Body parser
+// ================= BODY PARSER =================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// 🔥 SINGLE MongoDB connect
-mongoose.connect(process.env.MONGO_URI, {
-  serverSelectionTimeoutMS: 5000
-})
-.then(() => console.log("MongoDB Connected ✅"))
-.catch(err => {
-  console.error("MongoDB Error ❌:", err.message);
-});
-
-// ✅ Health check
+// ================= HEALTH CHECK =================
 app.get("/health", (req, res) => {
-  res.send("OK");
+  res.send("OK ✅");
 });
 
-// 🏠 Home
+// ================= HOME =================
 app.get("/", (req, res) => {
   res.json({ message: "Backend chal raha hai 🚀" });
 });
+
+// ================= DATABASE CONNECT =================
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI, {
+      serverSelectionTimeoutMS: 5000
+    });
+    console.log("MongoDB Connected ✅");
+  } catch (err) {
+    console.error("MongoDB Error ❌:", err.message);
+    process.exit(1);
+  }
+};
+
+// ================= DB CHECK MIDDLEWARE =================
 app.use((req, res, next) => {
   if (mongoose.connection.readyState !== 1) {
     return res.status(503).json({ error: "DB not connected yet ⏳" });
   }
   next();
 });
-// 🔐 Routes
+
+// ================= ROUTES =================
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api", require("./routes/protected"));
 app.use("/api/products", require("./routes/product"));
 
-// ❌ 404
+// ================= 404 =================
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found ❌" });
 });
 
-// ❌ Error handler
+// ================= ERROR HANDLER =================
 app.use((err, req, res, next) => {
-  console.error("ERROR:", err);
-  res.status(500).json({ message: "Something went wrong ❌" });
+  console.error("ERROR 👉", err.message);
+  res.status(500).json({
+    message: err.message || "Something went wrong ❌"
+  });
 });
 
-// 🚀 Start
-
-
+// ================= SERVER START =================
 const startServer = async () => {
-  try {
-    await mongoose.connect(process.env.MONGO_URI, {
-      serverSelectionTimeoutMS: 5000
-    });
+  await connectDB();
 
-    console.log("MongoDB Connected ✅");
+  const PORT = process.env.PORT || 5000;
 
-    const PORT = process.env.PORT || 5000;
-
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-
-  } catch (err) {
-    console.error("MongoDB Error ❌:", err);
-    process.exit(1);
-  }
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
 };
 
 startServer();
