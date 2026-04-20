@@ -42,11 +42,15 @@ router.post("/add", authMiddleware, async (req, res) => {
 // 📦 Get all products
 router.get("/", async (req, res) => {
   try {
-    const products = await Product.find();
+    console.log("Fetching products...");
+
+    const products = await Product.find().lean();
+
     res.json(products);
+
   } catch (err) {
-    console.log("GET ERROR:", err);
-    res.status(500).json({ message: "Server error ❌" });
+    console.error("🔥 REAL ERROR:", err);
+    res.status(500).json({ error: err.message }); // 👈 CHANGE
   }
 });
 
