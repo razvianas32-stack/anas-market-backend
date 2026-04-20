@@ -49,7 +49,12 @@ app.get("/health", (req, res) => {
 app.get("/", (req, res) => {
   res.json({ message: "Backend chal raha hai 🚀" });
 });
-
+app.use((req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({ error: "DB not connected yet ⏳" });
+  }
+  next();
+});
 // 🔐 Routes
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api", require("./routes/protected"));
@@ -67,7 +72,7 @@ app.use((err, req, res, next) => {
 });
 
 // 🚀 Start
-mongoose.set("bufferCommands", false);
+
 
 const startServer = async () => {
   try {
