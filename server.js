@@ -84,7 +84,7 @@ const startServer = async () => {
     });
 
   } catch (err) {
-    console.error("MongoDB Error ❌:", err.message);
+    console.error("MongoDB Error ❌:", err);
     process.exit(1);
   }
 };
